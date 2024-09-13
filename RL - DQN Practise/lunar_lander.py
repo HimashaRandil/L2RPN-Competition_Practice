@@ -14,10 +14,13 @@ if __name__ == '__main__':
     for i in range(n_games):
         score = 0
         done = False
-        observation = env.reset()
+        observation = env.reset()[0]  # Extract numpy array from the tuple
+        observation = np.array(observation, dtype=np.float32)
         while not done:
             action = agent.choose_action(observation)
-            observation_, reward, done, info = env.step(action)
+            observation_, reward, terminated, truncated, info = env.step(action)
+            observation_ = np.array(observation_, dtype=np.float32)  # Ensure correct type
+            done = terminated or truncated
             score += reward
             agent.store_transition(observation, action, reward, observation_, done)
             agent.learn()
@@ -31,4 +34,4 @@ if __name__ == '__main__':
     x = [i+1 for i in range(n_games)]
     filename = 'lunar_lander.png'
     plot_learning_curve(x, scores, eps_history, filename)
-        
+

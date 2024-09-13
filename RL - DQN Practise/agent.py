@@ -38,26 +38,42 @@ class Agent():
         self.eps_dec = eps_dec
         self.lr = lr
         self.action_space = [i for i in range(n_actions)]
-        self.input_dims = input_dims[0] 
+        self.input_dims = input_dims  # This should be a list or tuple, e.g., [8]
         self.batch_size = batch_size
         self.mem_size = max_mem_size
         self.mem_cntr = 0
+        
+        # Ensure input_dims is a list or tuple, and use the first element as the dimension
+        self.input_dim = self.input_dims[0]  # This should be 8 for LunarLander-v2
 
-        self.Q_eval = DeepQNetwork(self.lr, self.input_dims, 256, 256, n_actions)
-        self.state_memory = np.zeros((self.mem_size, self.input_dims), dtype=np.float32)
-        self.new_state_memory = np.zeros((self.mem_size, self.input_dims), dtype=np.float32)
+        # Initialize memory with the correct shape
+        self.Q_eval = DeepQNetwork(self.lr, self.input_dim, 256, 256, n_actions)
+        self.state_memory = np.zeros((self.mem_size, self.input_dim), dtype=np.float32)
+        self.new_state_memory = np.zeros((self.mem_size, self.input_dim), dtype=np.float32)
         self.action_memory = np.zeros(self.mem_size, dtype=np.int32)
         self.reward_memory = np.zeros(self.mem_size, dtype=np.float32)
         self.terminal_memory = np.zeros(self.mem_size, dtype=bool)
 
     def store_transition(self, state, action, reward, state_, done):
         index = self.mem_cntr % self.mem_size
+        
+        # Check if state is a tuple and extract the numpy array
+        if isinstance(state, tuple):
+            state = state[0]
+        if isinstance(state_, tuple):
+            state_ = state_[0]
+        
+        state = np.array(state, dtype=np.float32)
+        state_ = np.array(state_, dtype=np.float32)
+        
         self.state_memory[index] = state
         self.new_state_memory[index] = state_
         self.action_memory[index] = action
         self.reward_memory[index] = reward
         self.terminal_memory[index] = done
         self.mem_cntr += 1
+
+
 
     def choose_action(self, observation):
         if np.random.random() > self.epsilon:
